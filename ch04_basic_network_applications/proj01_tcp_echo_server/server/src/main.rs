@@ -1,3 +1,13 @@
+/// coding along with Network Programming with Rust by James L. Reid,
+/// chapter 4, building basic network applications,
+/// mini-project 1: crafting your first TCP echo server and client
+/// 
+/// echo server -> a parrot that repeats eveything you say
+/// whenever it receives messages, it simply sends it back to the sender
+/// tool for testing network connectivity
+/// 
+/// the SERVER
+
 use std::{
     net::{
         TcpListener,
