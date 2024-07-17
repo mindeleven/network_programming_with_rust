@@ -25,11 +25,12 @@ fn main() {
     let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
     println!("Server listening on 127.0.0.1::8080");
 
-    // accept incoming connections
+    // using a for loop for continuously accepting incoming connections
     for stream in listener.incoming() {
         match stream {
             Ok(mut stream) => {
-                // handle the client connection
+                // for each connection we call the handle_client function
+                // to handle the client connection
                 handle_client(&mut stream);
             },
             Err(e) => {
@@ -43,10 +44,11 @@ fn main() {
 fn handle_client(stream: &mut TcpStream) {
     // creating a buffer to hold received data
     let mut buffer = [0; 1024];
-
+    // and using a while loop to continuously read data from the client
     while match stream.read(&mut buffer) {
         Ok(size) => {
-            // echo the received data back to the client
+            // for each chunk of data received 
+            // we echo it back to the client using stream.write_all
             stream.write_all(&buffer[0..size]).unwrap();
             // continue loop as long as data being received
             true
