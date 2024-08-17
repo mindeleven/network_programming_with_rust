@@ -1,0 +1,6 @@
+[package]
+name = "proj03_real_time_chat_server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
