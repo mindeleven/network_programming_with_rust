@@ -25,7 +25,7 @@ fn main() {
         // returns number of bytes received and source address
         let (num_bytes, src_addr) = socket.recv_from(&mut buf).unwrap();
         
-        println!("Echoing `{}`", String::from_utf8_lossy y(&buf[0..num_bytes]));
+        println!("Echoing `{}`", String::from_utf8_lossy(&buf[0..num_bytes]));
 
         // echo the data back to the sender at src_addr
         socket.send_to(&buf[0..num_bytes], src_addr).unwrap();
