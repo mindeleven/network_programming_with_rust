@@ -1,3 +1,9 @@
+/// key differences of udp from tcp:
+/// -> udp doesn't perform a handshake before exchanging data
+/// -> no reliability guarantee: not guaranteed to be delivered in order, 
+///    without error or at all
+/// -> no overhead or error-checking and flow control (therefore udp is faster)
+
 // importing the UdpSocket type from std::net
 use std::net::UdpSocket;
 
@@ -19,7 +25,7 @@ fn main() {
         // returns number of bytes received and source address
         let (num_bytes, src_addr) = socket.recv_from(&mut buf).unwrap();
         
-        println!("Echoing: {}", String::from_utf8_lossy(&buf[0..num_bytes]));
+        println!("Echoing `{}`", String::from_utf8_lossy y(&buf[0..num_bytes]));
 
         // echo the data back to the sender at src_addr
         socket.send_to(&buf[0..num_bytes], src_addr).unwrap();
