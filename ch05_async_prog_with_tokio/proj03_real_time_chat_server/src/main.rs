@@ -71,6 +71,31 @@ impl Shared {
     }
 }
 
-fn main() {
-    println!("Hello, world!");
+#[tokio::main]
+async fn main() {
+    
+    let listener = TcpListener::bind("127.0.0.1:8080").await.unwrap();
+    println!("Server listening on port 8080");
+
+    let shared = Shared {
+        peers: Arc::new(Mutex::new(HashMap::new())),
+    };
+    
+    let mut next_id = 1;
+
+    loop {
+
+        let (socket, _) = listener.accept().await.unwrap();
+
+        println!("New client connected");
+
+        let shared_clone = shared.clone();
+
+        tokio::spawn(async move {
+            Shared::handle_connection(socket, next_id, shared_clone).await;
+        });
+
+        next_id += 1;
+
+    }
 }
