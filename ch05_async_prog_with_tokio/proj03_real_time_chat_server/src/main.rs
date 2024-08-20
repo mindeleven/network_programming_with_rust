@@ -30,6 +30,45 @@ impl Shared {
             self.peers.lock().unwrap().remove(&id); // remove disconnected clients
         }
     }
+
+    async fn handle_connection(mut socket: TcpStream, id: usize, shared: Shared) {
+        
+        let (tx, mut rx) = mpsc::unbounded_channel();
+
+        shared.peers.lock().unwrap().insert(id, tx);
+
+        let (mut reader, mut writer) = socket.split();
+
+        let mut buf = [0; 1024];
+
+        loop {
+            tokio::select! {
+                result = reader.read(&mut buf) => {
+                    match result {
+                        Ok(0) => {
+                            println!("Client {} disconnected", id);
+                            shared.peers.lock().unwrap().remove(&id);
+                            return;
+                        },
+                        Ok(n) => {
+                            let message = String::from_utf8_lossy(&buf[0..n]);
+                            shared.broadcast(id, &message).await;
+                        },
+                        Err(e) => {
+                            eprintln!("error: {}", e);
+                            return;
+                        },
+                    }
+                }
+                Some(message) = rx.recv() => {
+                    if let Err(e) = writer.write_all(message.as_bytes()).await {
+                        eprintln!("error: {}", e);
+                        return;
+                    }
+                }
+            }
+        }
+    }
 }
 
 fn main() {
