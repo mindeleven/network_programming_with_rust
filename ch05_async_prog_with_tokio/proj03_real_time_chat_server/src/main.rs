@@ -31,7 +31,7 @@ impl Shared {
         }
     }
 
-    async fn handle_connection(mut socket: TcpStream, id: usize, shared: Shared) {
+    async fn handle_connection(mut socket: TcpStream, id: usize, mut shared: Shared) {
         
         let (tx, mut rx) = mpsc::unbounded_channel();
 
