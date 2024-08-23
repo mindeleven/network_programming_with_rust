@@ -9,6 +9,10 @@ enum Result<T, E> {
     Err(E)
 }
 */
+
+use std::net::TcpStream;
+use std::io::Write;
+
 // ways of error handling in Rust
 
 // (1) pattern matching
@@ -39,6 +43,16 @@ fn _error_propagation(filename: &str) -> Result<String, std::io::Error> {
     let contents = std::fs::read_to_string(filename)?;
     
     Ok(contents)
+}
+
+// another error propagation example
+// function to send a message over a tcp connection
+fn _send_message(stream: &mut TcpStream, message: &str) -> Result<(), std::io::Error> {
+    
+    stream.write_all(message.as_bytes())?; // will return std::io::Error if write_all fails
+    
+    Ok(())
+
 }
 
 fn main() {
