@@ -1,18 +1,35 @@
+/// building an asynchronous chat server using tokio
+/// project with real time communication where messages are exchanged 
+/// instantly between clients and servers via TCP
+/// 
+/// essence of the chat server: a virtual lounge 
+/// where multiple users can connect and chat in real time
+/// 
+/// importing the necessary modules
 use tokio::net::{ TcpListener, TcpStream };
 use tokio::io::{ AsyncReadExt, AsyncWriteExt };
 use tokio::sync::mpsc;
 use std::collections::HashMap;
 use std::sync::{ Arc, Mutex };
 
+/// creating type aliases for sender and receiver channels
+/// will be used for communication between tasks
 type Tx = mpsc::UnboundedSender<String>; // type alias for the sender channel
 type Rx = mpsc::UnboundedReceiver<String>; // type alias for the receiver channel
 
+/// Shared struct
+/// -> holds hashmap to keep track of connected peers
+/// -> key: unique ID
+/// -> value: associated sender channels
+/// -> Arc<Mutex<...>>> wrapper makes structure thread safe
 #[derive(Clone)]
 struct Shared {
     peers: Arc<Mutex<HashMap<usize, Tx>>>
 }
 
 impl Shared {
+    // broadcast method of Shared struct is responsible for sending message to
+    // all connected clients except the sender
     async fn broadcast(&mut self, sender_id: usize, message: &str) {
         
         let peers = self.peers.lock().unwrap();
