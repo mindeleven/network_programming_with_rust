@@ -47,7 +47,11 @@ impl Shared {
             self.peers.lock().unwrap().remove(&id); // remove disconnected clients
         }
     }
-
+    
+    // functionality to handle a single client connection
+    // -> creates unbounded channels for communication between client and server
+    // -> inserts client's sender channel into shared peers map
+    // -> listens for (1) incoming msgs from client & (2) msgs to be broadcasted to client
     async fn handle_connection(mut socket: TcpStream, id: usize, mut shared: Shared) {
         
         let (tx, mut rx) = mpsc::unbounded_channel();
@@ -90,28 +94,33 @@ impl Shared {
 
 #[tokio::main]
 async fn main() {
-    
+    // create TCP listener that listens for incoming connections
     let listener = TcpListener::bind("127.0.0.1:8080").await.unwrap();
     println!("Server listening on port 8080");
-
+    
+    // initialize the shared Shared struct
     let shared = Shared {
         peers: Arc::new(Mutex::new(HashMap::new())),
     };
     
     let mut next_id = 1;
-
+    
+    // enter infinite loop
     loop {
-
+        // accept new connections
         let (socket, _) = listener.accept().await.unwrap();
 
         println!("New client connected");
 
         let shared_clone = shared.clone();
-
+        
+        // spawn a new task for each connection 
+        // passing socket, client id and clone of Shared struct
         tokio::spawn(async move {
             Shared::handle_connection(socket, next_id, shared_clone).await;
         });
-
+        
+        // incrementing next id to assign new id to new clients
         next_id += 1;
 
     }
