@@ -1,0 +1,6 @@
+[package]
+name = "proj03_thread_per_connection"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
