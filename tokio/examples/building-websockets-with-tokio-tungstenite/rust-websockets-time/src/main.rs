@@ -14,6 +14,39 @@ using rust" */
 cargo add tokio -F "tokio/full" futures-util tokio-tungstenite -F "tokio-tungstenite/native-tls"
 */
 
-fn main() {
-    println!("Hello, world!");
+use futures_util::{SinkExt, StreamExt};
+use tokio_tungstenite::{connect_async, tungstenite::Message};
+
+#[tokio::main]
+async fn main() {
+    // url to public websocket server
+    // TODO: give this a try in postman
+    let url: &str = "wss://echo.websocket.events";
+    println!("Connecting to - {}", url);
+
+    // connecting asynchronously to server
+    let (ws_stream, _) = connect_async(url).await.expect("Failed to connect");
+    println!("Connected to agent network");
+
+    // split up the websocket stream into a write and read stream
+    let (mut write, mut read) = ws_stream.split();
+    
+    // read before write
+    if let Some(message) = read.next().await {
+        let message = message.expect("Failed to read the message");
+        println!("Reveived a message: {}", message);
+    } 
+
+    // sending a message
+    let msg = Message::Text("Aloha echo server".into());
+    println!("Sending message: {}", msg);
+    write.send(msg).await.expect("Failed to send message");
+
+    // reading the message and write it to the console
+
+    // taking what comes out of this stream and read it into a message
+    if let Some(message) = read.next().await {
+        let message = message.expect("Failed to read the message");
+        println!("Reveived a message: {}", message);
+    } // reading the message from the stream
 }
