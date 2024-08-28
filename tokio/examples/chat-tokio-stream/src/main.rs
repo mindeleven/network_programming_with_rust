@@ -22,6 +22,12 @@ async fn main() {
     let listener = TcpListener::bind("127.0.0.1:8080")
         .await // waiting to get the Result out of the Future
         .unwrap(); // unpacking the Result
+
+    // we need to communicate the line that's read from on client to every client connected
+    // using a broadcast channel which ->
+    // allows multiple producers and multiple consumers to send and receive on a single channel
+    // channel gets number of items it can receive as a parameter
+    let (tx, _rx) = broadcast::channel::<String>(10);
     
     // to accept multiple connections we need to pack everything into an extra loop
     loop {
@@ -30,12 +36,6 @@ async fn main() {
         // -> socket which tcp stream & address which is socket address
         // after we got socket we can connect with `telnet localhost 8080`
         let (mut socket, _addr) = listener.accept().await.unwrap();
-
-        // we need to communicate the line that's read from on client to every client connected
-        // using a broadcast channel which ->
-        // allows multiple producers and multiple consumers to send and receive on a single channel
-        // channel gets number of items it can receive as a parameter
-        let (tx, _rx) = broadcast::channel::<String>(10);
 
         // cloning tx before moving it into the loop
         let tx = tx.clone();
