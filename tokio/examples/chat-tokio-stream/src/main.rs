@@ -30,46 +30,52 @@ async fn main() {
         // -> socket which tcp stream & address which is socket address
         // after we got socket we can connect with `telnet localhost 8080`
         let (mut socket, _addr) = listener.accept().await.unwrap();
+
+        // we need to work with different tasks correctly so we need to spawn different tasks
+        // passing an async block to tokio spawn
+        tokio::spawn(async move {
         
-        // separating the read part from the write part of the socket
-        // necessary because the read part needs to be moved into BufReader and can't be used in the loop
-        let (read, mut writer) = socket.split();
+            // separating the read part from the write part of the socket
+            // necessary because the read part needs to be moved into BufReader and can't be used in the loop
+            let (read, mut writer) = socket.split();
 
-        // Using BufReader instead of creating a buffer to allow for a higher level of read operations
-        let mut reader = BufReader::new(read);
-        let mut line = String::new();
+            // Using BufReader instead of creating a buffer to allow for a higher level of read operations
+            let mut reader = BufReader::new(read);
+            let mut line = String::new();
 
-        // after we got a socket we can drop into an inifinite loop 
-        // that allows to accept an infinite number of connections
-        loop {
-            // accepting an incoming message from the client
-            // let mut buffer = [0u8; 1024]; // setting up buffer with spave for 1024 bytes
+            // after we got a socket we can drop into an inifinite loop 
+            // that allows to accept an infinite number of connections
+            loop {
+                // accepting an incoming message from the client
+                // let mut buffer = [0u8; 1024]; // setting up buffer with spave for 1024 bytes
 
-            
-            // bytes_read with setting up a buffer:
-            // let bytes_read: usize = socket.read(&mut buffer).await.unwrap(); // returns number of bytes that were read
-            
-            // bytes_read with BufReader:
-            let bytes_read = reader.read_line(&mut line).await.unwrap();
+                
+                // bytes_read with setting up a buffer:
+                // let bytes_read: usize = socket.read(&mut buffer).await.unwrap(); // returns number of bytes that were read
+                
+                // bytes_read with BufReader:
+                let bytes_read = reader.read_line(&mut line).await.unwrap();
 
-            // bytes_read can tell us if the client has disconnected or not
-            if bytes_read == 0 {
-                // reader has reached end of file and there's no data left
-                break;
+                // bytes_read can tell us if the client has disconnected or not
+                if bytes_read == 0 {
+                    // reader has reached end of file and there's no data left
+                    break;
+                }
+
+                // sending read bytes back to the client
+                // sending with setting up a buffer:
+                // socket.write_all(&buffer[..bytes_read]).await.unwrap();
+
+                // sending with BufReader:
+                // write is the Write half of the socket
+                writer.write_all(&line.as_bytes()).await.unwrap();
+
+                // the BufReader adds line after line by default
+                // so to just send the most current line back we need to clear it
+                line.clear();
             }
 
-            // sending read bytes back to the client
-            // sending with setting up a buffer:
-            // socket.write_all(&buffer[..bytes_read]).await.unwrap();
-
-            // sending with BufReader:
-            // write is the Write half of the socket
-            writer.write_all(&line.as_bytes()).await.unwrap();
-
-            // the BufReader adds line after line by default
-            // so to just send the most current line back we need to clear it
-            line.clear();
-        }
+        });
     }
     
 }
