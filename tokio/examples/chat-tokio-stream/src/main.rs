@@ -7,7 +7,9 @@ demonstrates how you can spawn background tasks to manage independent network st
 use tokio::select! to concurrently poll tasks which require a shared state. 
 " */
 
-use tokio::net::{ TcpListener, TcpStream };
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt}, net::TcpListener
+};
 
 /// incremental steps to creating a chat sever
 /// 1st step -> making a tcp echo server
@@ -24,8 +26,14 @@ async fn main() {
     // -> calling accept() on the listener; returns a Future
     // -> socket which tcp stream & address which is socket address
     // after we got socket we can connect with `telnet localhost 8080`
-    let (socket, _addr) = listener.accept().await.unwrap();
+    let (mut socket, _addr) = listener.accept().await.unwrap();
     
+    // accepting an incoming message from the client
+    let mut buffer = [0u8; 1024]; // setting up buffer with spave for 1024 bytes
+    let bytes_read = socket.read(&mut buffer).await.unwrap(); // returns number of bytes that were read
+    
+    // sending read bytes back to the client
+    socket.write_all(&buffer[..bytes_read]).await.unwrap();
 
     println!("Hello, world!");
 }
