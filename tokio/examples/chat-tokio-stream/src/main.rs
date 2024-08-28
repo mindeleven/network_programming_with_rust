@@ -1,5 +1,5 @@
 /// coding along with Creating a Chat Server with async Rust and Tokio by Lily Mara
-/// video tutorial @ https://www.youtube.com/watch?v=T2mWg91sx-o
+/// video tutorial @ https://www.youtube.com/watch?v=T2mWg91sx-o // 39:44
 /// description from youtube:
 /* "Building a chat server is a great way to learn the Tokio library because a chat server forces 
 you to think about concurrent IO, which is the core purpose of Tokio. In this video, Lily 
@@ -57,13 +57,30 @@ async fn main() {
             // after we got a socket we can drop into an inifinite loop 
             // that allows to accept an infinite number of connections
             loop {
+                // using the tokio select macro
+                tokio::select! {
+                    result = reader.read_line(&mut line) => {
+                        if result.unwrap() == 0 {
+                            break;
+                        }
+                        tx.send(line.clone()).unwrap();
+                        line.clear();
+                    }
+                    result = rx.recv() => {
+                        // calling unwrap on the result that comes out of the future
+                        let msg = result.unwrap();
+
+                        writer.write_all(msg.as_bytes()).await.unwrap();
+                    }
+                }
+
                 // accepting an incoming message from the client
                 // let mut buffer = [0u8; 1024]; // setting up buffer with spave for 1024 bytes
 
-                
                 // bytes_read with setting up a buffer:
                 // let bytes_read: usize = socket.read(&mut buffer).await.unwrap(); // returns number of bytes that were read
                 
+                /* moving these lines into the select macro 
                 // bytes_read with BufReader:
                 let bytes_read = reader.read_line(&mut line).await.unwrap();
 
@@ -72,11 +89,13 @@ async fn main() {
                     // reader has reached end of file and there's no data left
                     break;
                 }
+                */
 
                 // sending read bytes back to the client
                 // sending with setting up a buffer:
                 // socket.write_all(&buffer[..bytes_read]).await.unwrap();
-
+                
+                /* moving these lines into the select macro too
                 // now using the broadcast channel to send items on the channel
                 tx.send(line.clone()).unwrap();
 
@@ -93,6 +112,7 @@ async fn main() {
                 // the BufReader adds line after line by default
                 // so to just send the most current line back we need to clear it
                 line.clear();
+                */
             }
 
         });
