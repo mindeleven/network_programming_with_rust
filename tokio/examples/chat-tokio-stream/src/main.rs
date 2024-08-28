@@ -33,7 +33,7 @@ async fn main() {
     // necessary because the read part needs to be moved into BufReader and can't be used in the loop
     let (read, mut writer) = socket.split();
 
-    // using BufReader instead of creating a buffer to allow for a higher level of read operations
+    // Using BufReader instead of creating a buffer to allow for a higher level of read operations
     let mut reader = BufReader::new(read);
     let mut line = String::new();
 
@@ -63,6 +63,10 @@ async fn main() {
         // sending with BufReader:
         // write is the Write half of the socket
         writer.write_all(&line.as_bytes()).await.unwrap();
+
+        // the BufReader adds line after line by default
+        // so to just send the most current line back we need to clear it
+        line.clear();
     }
     
 }
