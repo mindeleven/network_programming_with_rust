@@ -27,13 +27,16 @@ async fn main() {
     // -> socket which tcp stream & address which is socket address
     // after we got socket we can connect with `telnet localhost 8080`
     let (mut socket, _addr) = listener.accept().await.unwrap();
-    
-    // accepting an incoming message from the client
-    let mut buffer = [0u8; 1024]; // setting up buffer with spave for 1024 bytes
-    let bytes_read = socket.read(&mut buffer).await.unwrap(); // returns number of bytes that were read
-    
-    // sending read bytes back to the client
-    socket.write_all(&buffer[..bytes_read]).await.unwrap();
 
-    println!("Hello, world!");
+    // after we got a socket we can drop into an inifinite loop 
+    // that allows to accept an infinite number of connections
+    loop {
+        // accepting an incoming message from the client
+        let mut buffer = [0u8; 1024]; // setting up buffer with spave for 1024 bytes
+        let bytes_read = socket.read(&mut buffer).await.unwrap(); // returns number of bytes that were read
+        
+        // sending read bytes back to the client
+        socket.write_all(&buffer[..bytes_read]).await.unwrap();
+    }
+    
 }
