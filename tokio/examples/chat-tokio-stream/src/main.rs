@@ -9,7 +9,7 @@ use tokio::select! to concurrently poll tasks which require a shared state.
 
 use tokio::{
     io::{ AsyncBufReadExt, AsyncWriteExt, BufReader },
-    net::TcpListener
+    net::TcpListener, sync::broadcast
 };
 
 /// incremental steps to creating a chat sever
@@ -30,6 +30,17 @@ async fn main() {
         // -> socket which tcp stream & address which is socket address
         // after we got socket we can connect with `telnet localhost 8080`
         let (mut socket, _addr) = listener.accept().await.unwrap();
+
+        // we need to communicate the line that's read from on client to every client connected
+        // using a broadcast channel which ->
+        // allows multiple producers and multiple consumers to send and receive on a single channel
+        // channel gets number of items it can receive as a parameter
+        let (tx, _rx) = broadcast::channel::<String>(10);
+
+        // cloning tx before moving it into the loop
+        let tx = tx.clone();
+        // pulling the receiver out of the sender and not using the one we got above
+        let mut rx = tx.subscribe();
 
         // we need to work with different tasks correctly so we need to spawn different tasks
         // passing an async block to tokio spawn
@@ -66,9 +77,18 @@ async fn main() {
                 // sending with setting up a buffer:
                 // socket.write_all(&buffer[..bytes_read]).await.unwrap();
 
+                // now using the broadcast channel to send items on the channel
+                tx.send(line.clone()).unwrap();
+
+                // we also need to receive items on the channel
+                let msg = rx.recv().await.unwrap();
+
                 // sending with BufReader:
                 // write is the Write half of the socket
-                writer.write_all(&line.as_bytes()).await.unwrap();
+                // writer.write_all(&line.as_bytes()).await.unwrap();
+                
+                // broadcasting the message to all clients
+                writer.write_all(msg.as_bytes()).await.unwrap();
 
                 // the BufReader adds line after line by default
                 // so to just send the most current line back we need to clear it
