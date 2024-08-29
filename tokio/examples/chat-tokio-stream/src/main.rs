@@ -27,7 +27,9 @@ async fn main() {
     // using a broadcast channel which ->
     // allows multiple producers and multiple consumers to send and receive on a single channel
     // channel gets number of items it can receive as a parameter
-    let (tx, _rx) = broadcast::channel::<String>(10);
+    // let (tx, _rx) = broadcast::channel::<String>(10);
+    // removing the generic type because now we're sending a tuple with msg-string and address
+    let (tx, _rx) = broadcast::channel(10);
     
     // to accept multiple connections we need to pack everything into an extra loop
     loop {
@@ -35,7 +37,7 @@ async fn main() {
         // -> calling accept() on the listener; returns a Future
         // -> socket which tcp stream & address which is socket address
         // after we got socket we can connect with `telnet localhost 8080`
-        let (mut socket, _addr) = listener.accept().await.unwrap();
+        let (mut socket, addr) = listener.accept().await.unwrap();
 
         // cloning tx before moving it into the loop
         let tx = tx.clone();
@@ -63,14 +65,22 @@ async fn main() {
                         if result.unwrap() == 0 {
                             break;
                         }
-                        tx.send(line.clone()).unwrap();
+                        // sending back to the client
+                        // tx.send(line.clone()).unwrap();
+                        // with minor modification: adding the address and wrapping it in tuple
+                        tx.send((line.clone(), addr)).unwrap();
                         line.clear();
                     }
                     result = rx.recv() => {
                         // calling unwrap on the result that comes out of the future
-                        let msg = result.unwrap();
+                        // let msg = result.unwrap();
+                        // destructuring it into msg and address
+                        let (msg, other_addr) = result.unwrap();
 
-                        writer.write_all(msg.as_bytes()).await.unwrap();
+                        // only broadcasting if receiver is not sender
+                        if addr != other_addr {
+                            writer.write_all(msg.as_bytes()).await.unwrap();
+                        }  
                     }
                 }
 
