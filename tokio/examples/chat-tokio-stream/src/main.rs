@@ -1,5 +1,5 @@
 /// coding along with Creating a Chat Server with async Rust and Tokio by Lily Mara
-/// video tutorial @ https://www.youtube.com/watch?v=T2mWg91sx-o // 39:44
+/// video tutorial @ https://www.youtube.com/watch?v=T2mWg91sx-o
 /// description from youtube:
 /* "Building a chat server is a great way to learn the Tokio library because a chat server forces 
 you to think about concurrent IO, which is the core purpose of Tokio. In this video, Lily 
@@ -60,6 +60,9 @@ async fn main() {
             // that allows to accept an infinite number of connections
             loop {
                 // using the tokio select macro
+                // select is very useful when you have things 
+                // -> that need to operate on the same shared state
+                // -> and you've a finite number of things
                 tokio::select! {
                     result = reader.read_line(&mut line) => {
                         if result.unwrap() == 0 {
